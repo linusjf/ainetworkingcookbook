@@ -11,6 +11,7 @@ Penalties.
 ######################################################################
 """
 import openai
+import argparse
 
 def generate_text(prompt, presence_penalty=0.0, frequency_penalty=0.0):
     response = openai.chat.completions.create(
@@ -22,18 +23,26 @@ def generate_text(prompt, presence_penalty=0.0, frequency_penalty=0.0):
     )
     return response.choices[0].message.content
 
-# Example prompt
-prompt = "Tell me a short story about a cat."
+def main():
+    parser = argparse.ArgumentParser(description="Generate text with different penalty settings.")
+    parser.add_argument("--prompt", type=str, default="Tell me a short story about a cat.",
+                       help="Prompt to send to the model (default: 'Tell me a short story about a cat.')")
+    
+    args = parser.parse_args()
+    prompt = args.prompt
+    
+    # No penalties
+    print("No penalties:\n", generate_text(prompt))
+    
+    # High presence penalty
+    print("\nHigh Presence Penalty (2.0):\n", generate_text(prompt, presence_penalty=2.0))
+    
+    # High frequency penalty
+    print("\nHigh Frequency Penalty (2.0):\n", generate_text(prompt, frequency_penalty=2.0))
+    
+    # Optimal penalties
+    print("\nPresence Penalty (0.6),Frequency Penalty (0.5):\n", 
+          generate_text(prompt, presence_penalty=0.6, frequency_penalty=0.5))
 
-# No penalties
-print("No penalties:\n", generate_text(prompt))
-
-# High presence penalty
-print("\nHigh Presence Penalty (2.0):\n", generate_text(prompt, presence_penalty=2.0))
-
-# High frequency penalty
-print("\nHigh Frequency Penalty (2.0):\n", generate_text(prompt, frequency_penalty=2.0))
-
-
-# Optimal penalties
-print("\nPresence Penalty (0.6),Frequency Penalty (0.5):\n", generate_text(prompt, presence_penalty=0.6, frequency_penalty=0.5))
+if __name__ == "__main__":
+    main()
