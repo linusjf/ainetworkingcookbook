@@ -14,7 +14,6 @@ from openai import OpenAI
 from typing import Any
 from math import exp
 import numpy as np
-from IPython.display import display, HTML
 import os
 
 client = OpenAI()
@@ -82,12 +81,17 @@ Article headline: {headline}"""
             top_logprobs=2,
         )
         top_two_logprobs = API_RESPONSE.choices[0].logprobs.content[0].top_logprobs
-        html_content = ""
+        print("Top log probabilities:")
         for i, logprob in enumerate(top_two_logprobs, start=1):
-            html_content += (
-                f"<span style='color: cyan'>Output token {i}:</span> {logprob.token}, "
-                f"<span style='color: darkorange'>logprobs:</span> {logprob.logprob}, "
-                f"<span style='color: magenta'>linear probability:</span> {np.round(np.exp(logprob.logprob)*100,2)}%<br>"
-            )
-        display(HTML(html_content))
-        print("\n")
+            linear_prob = np.round(np.exp(logprob.logprob) * 100, 2)
+            print(f"  Output token {i}: '{logprob.token}', "
+                  f"logprob: {logprob.logprob:.4f}, "
+                  f"linear probability: {linear_prob}%")
+        print()
+
+
+def main():
+    classify_news_articles()
+
+if __name__ == "__main__":
+    main()
