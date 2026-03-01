@@ -132,7 +132,7 @@ Respond with just one word, the boolean true or false. You must output the word 
                     ),
                 }
             ],
-            model="gpt-4o-mini",
+            model="gpt-4o",
             logprobs=True,
         )
         print(f"\nQuestion: {question}")
@@ -166,7 +166,7 @@ Respond with just one word, the boolean true or false. You must output the word 
             print(f"  has_sufficient_context_for_answer: '{logprob.token}', "
                   f"logprob: {logprob.logprob:.4f}, "
                   f"linear probability: {linear_prob}%")
-        
+
         # Also show top logprobs if available
         if hasattr(API_RESPONSE.choices[0].logprobs.content[0], 'top_logprobs'):
             print("  Top log probabilities:")
