@@ -177,9 +177,64 @@ Respond with just one word, the boolean true or false. You must output the word 
                       f"linear probability: {top_linear_prob}%")
 
 
+def autocomplete():
+    sentence_list = [
+    "My",
+    "My least",
+    "My least favorite",
+    "My least favorite TV",
+    "My least favorite TV show",
+    "My least favorite TV show is",
+    "My least favorite TV show is Breaking Bad",
+    ]
+
+    high_prob_completions = {}
+    low_prob_completions = {}
+    
+    print("\n" + "="*80)
+    print("Autocomplete Predictions")
+    print("="*80)
+
+    for sentence in sentence_list:
+        PROMPT = """Complete this sentence. You are acting as auto-complete. Simply complete the sentence to the best of your ability, make sure it is just ONE sentence: {sentence}"""
+        API_RESPONSE = get_completion(
+            [{"role": "user", "content": PROMPT.format(sentence=sentence)}],
+            model="gpt-4o-mini",
+            logprobs=True,
+            top_logprobs=3,
+        )
+        print(f"\nSentence: {sentence}")
+        first_token = True
+        for i, token in enumerate(API_RESPONSE.choices[0].logprobs.content[0].top_logprobs, start=1):
+            linear_prob = np.round(np.exp(token.logprob) * 100, 2)
+            print(f"  Predicted next token {i}: '{token.token}', "
+                  f"logprob: {token.logprob:.4f}, "
+                  f"linear probability: {linear_prob}%")
+            if first_token:
+                if np.exp(token.logprob) > 0.95:
+                    high_prob_completions[sentence] = token.token
+                if np.exp(token.logprob) < 0.60:
+                    low_prob_completions[sentence] = token.token
+            first_token = False
+    
+    # Print summary of high and low probability completions
+    print("\n" + "="*80)
+    print("Summary of High Probability Completions (>95%)")
+    print("="*80)
+    for sentence, token in high_prob_completions.items():
+        print(f"  '{sentence}' -> '{token}'")
+    
+    print("\n" + "="*80)
+    print("Summary of Low Probability Completions (<60%)")
+    print("="*80)
+    for sentence, token in low_prob_completions.items():
+        print(f"  '{sentence}' -> '{token}'")
+
+
 def main():
     classify_news_articles()
     retrieval_confidence_scoring()
+    autocomplete()
 
 if __name__ == "__main__":
     main()
