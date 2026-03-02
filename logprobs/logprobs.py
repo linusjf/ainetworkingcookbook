@@ -190,7 +190,7 @@ def autocomplete():
 
     high_prob_completions = {}
     low_prob_completions = {}
-    
+
     print("\n" + "="*80)
     print("Autocomplete Predictions")
     print("="*80)
@@ -199,7 +199,7 @@ def autocomplete():
         PROMPT = """Complete this sentence. You are acting as auto-complete. Simply complete the sentence to the best of your ability, make sure it is just ONE sentence: {sentence}"""
         API_RESPONSE = get_completion(
             [{"role": "user", "content": PROMPT.format(sentence=sentence)}],
-            model="gpt-4o-mini",
+            model="gpt-4o",
             logprobs=True,
             top_logprobs=3,
         )
@@ -211,19 +211,20 @@ def autocomplete():
                   f"logprob: {token.logprob:.4f}, "
                   f"linear probability: {linear_prob}%")
             if first_token:
-                if np.exp(token.logprob) > 0.95:
+                linear_prob = np.exp(token.logprob)
+                if linear_prob > 0.95:
                     high_prob_completions[sentence] = token.token
-                if np.exp(token.logprob) < 0.60:
+                if linear_prob < 0.60:
                     low_prob_completions[sentence] = token.token
             first_token = False
-    
+
     # Print summary of high and low probability completions
     print("\n" + "="*80)
     print("Summary of High Probability Completions (>95%)")
     print("="*80)
     for sentence, token in high_prob_completions.items():
         print(f"  '{sentence}' -> '{token}'")
-    
+
     print("\n" + "="*80)
     print("Summary of Low Probability Completions (<60%)")
     print("="*80)
