@@ -12,6 +12,7 @@ Hallucinations.
 """
 
 from openai import OpenAI
+from enum import Enum
 import json
 import math
 
@@ -55,7 +56,6 @@ Question:
         raise RuntimeError(f"Model returned invalid JSON: {text}")
 
 # Step 2: Generate the final answer only if evaluation says true
-
 def generate_answer_with_evidence(content: str, question: str):
 
     prompt = f"""
@@ -79,7 +79,7 @@ Question:
 """
 
     resp = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o",
         response_format={"type": "json_object"},
         messages=[{"role": "user", "content": prompt}],
         logprobs=True,
@@ -102,20 +102,18 @@ def evidence_logprob(choice, evidence_spans):
     for tok in tokens:
         token = tok.token.strip()
 
+
         for span in evidence_spans:
             if token and token in span:
                 evidence_tokens.append(tok.logprob)
                 break
 
-
-    print(f"Evidence tokens log probabilities: {evidence_tokens}")
     if not evidence_tokens:
         return None
 
     return sum(evidence_tokens) / len(evidence_tokens)
 
 def confident_answer(content, question):
-
 
     data, choice = generate_answer_with_evidence(content, question)
     if data is not None:
@@ -124,24 +122,43 @@ def confident_answer(content, question):
         if score is None or score < -0.8:
             return {
                 "answer": "",
-                "reason": "Evidence tokens low confidence"
+                "reason": "Evidence tokens low confidence",
+                "confidence": score,
+                "linear-confidence": math.exp(score) if score is not None else 0.0
             }
 
         return {
             "answer": data["answer"],
-            "confidence": score
+            "confidence": score,
+            "linear-confidence": math.exp(score)
         }
 
     return None
 
-def classify_intent(user_query: str) -> str:
+
+class Intent(str, Enum):
+    INFORMATIONAL  = "informational"
+    INSTRUCTIONAL  = "instructional"
+    CONVERSATIONAL = "conversational"
+    TRANSACTIONAL  = "transactional"
+    TECHNICAL      = "technical"
+
+def classify_intent(user_query: str) -> Intent:
+    allowed = [i.value for i in Intent]
+
     resp = client.chat.completions.create(
         model="gpt-4o",
         response_format={"type": "json_object"},
         messages=[{
             "role": "user",
             "content": f"""
-Return the result as JSON.
+Classify the intent of the query below.
+Return ONLY a JSON object matching the schema.
+Intent must be one of: {", ".join(allowed)}.
+
+Use 'technical' for queries involving code, debugging, errors, or system-level problems.
+Use 'instructional' for general how-to questions that don't involve code.
+Use 'informational' for conceptual or factual questions.
 
 Query: {user_query}
 
@@ -152,14 +169,17 @@ Schema:
     )
 
     msg = resp.choices[0].message
-    assert msg.content is not None
+    if msg.content is None:
+        raise ValueError("Empty response from model")
 
-    return json.loads(msg.content)["intent"]
+    result = json.loads(msg.content)
+    return Intent(result["intent"])  # validates against enum
+
 
 def pipeline(content, user_query):
     intent = classify_intent(user_query)
     # choose different evaluation prompt based on intent
-    if intent == "technical":
+    if intent == Intent.TECHNICAL:
         # maybe inject more structured instructions
         pass
     print(f"Intent: {intent}")
@@ -178,12 +198,14 @@ def main():
     easy_questions = [
         "What nationality was Ada Lovelace?",
         "What was an important finding from Lovelace's seventh note?",
+        "Was Ada Byron born out of wedlock?"
     ]
 
     # Questions that are not fully covered in the article
     medium_questions = [
-        "Did Lovelace collaborate with Charles Dickens",
-        "What concepts did Lovelace build with Charles Babbage",
+        "Did Lovelace collaborate with Charles Dickens?",
+        "What concepts did Lovelace build with Charles Babbage?",
+        "Is Ada Lovelace the mother of computers?"
     ]
 
 
