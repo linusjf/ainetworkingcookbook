@@ -12,9 +12,7 @@ Logprobs.
 """
 from openai import OpenAI
 from typing import Any
-from math import exp
 import numpy as np
-import os
 
 client = OpenAI()
 
