@@ -247,7 +247,7 @@ def highlight_bytes():
             "\033[94m",  # Blue
         ]
         reset_color = "\033[0m"
-        
+
         tokens = api_response.choices[0].logprobs.content
 
         color_idx = 0  # Initialize color index
@@ -256,7 +256,7 @@ def highlight_bytes():
         print("="*80)
         print("\nResponse text with colored tokens:")
         print()
-        
+
         for t in tokens:
             token_str = bytes(t.bytes).decode("utf-8")  # Decode bytes to string
 
@@ -265,19 +265,11 @@ def highlight_bytes():
 
             # Move to the next color
             color_idx = (color_idx + 1) % len(colors)
-        
+
         print("\n\n" + "="*80)
         print("Token Details")
         print("="*80)
-        
-        # Print detailed token information
-        for i, t in enumerate(tokens, start=1):
-            token_str = bytes(t.bytes).decode("utf-8")
-            # Show token with its color
-            color_code = colors[(i-1) % len(colors)]
-            print(f"Token {i}: {color_code}{repr(token_str)}{reset_color} "
-                  f"(bytes: {list(t.bytes)}, logprob: {t.logprob:.4f})")
-        
+
         print(f"\nTotal number of tokens: {len(tokens)}")
 
     highlight_text(API_RESPONSE)
