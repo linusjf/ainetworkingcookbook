@@ -14,6 +14,7 @@ from openai import OpenAI
 from typing import Any
 import numpy as np
 import argparse
+import math
 
 client = OpenAI()
 
@@ -275,6 +276,34 @@ def highlight_bytes():
 
     highlight_text(API_RESPONSE)
 
+    PROMPT = """Output the blue heart emoji and its name."""
+    API_RESPONSE = get_completion(
+        [{"role": "user", "content": PROMPT}], model="gpt-4o", logprobs=True
+    )
+
+    aggregated_bytes = []
+    joint_logprob = 0.0
+
+    # Iterate over tokens, aggregate bytes and calculate joint logprob
+    for token in API_RESPONSE.choices[0].logprobs.content:
+        print("Token:", token.token)
+        print("Log prob:", token.logprob)
+        print("Linear prob:", np.round(math.exp(token.logprob) * 100, 2), "%")
+        print("Bytes:", token.bytes, "\n")
+        aggregated_bytes += token.bytes
+        joint_logprob += token.logprob
+
+    # Decode the aggregated bytes to text
+    aggregated_text = bytes(aggregated_bytes).decode("utf-8")
+
+    # Assert that the decoded text is the same as the message content
+    assert API_RESPONSE.choices[0].message.content == aggregated_text
+
+    # Print the results
+    print("Bytes array:", aggregated_bytes)
+    print(f"Decoded bytes: {aggregated_text}")
+    print("Joint prob:", np.round(math.exp(joint_logprob) * 100, 2), "%")
+
 def main():
     parser = argparse.ArgumentParser(description="Run logprobs demonstration functions")
     parser.add_argument(
@@ -302,33 +331,33 @@ def main():
         action="store_true",
         help="Run all demonstrations"
     )
-    
+
     args = parser.parse_args()
-    
+
     # If no arguments provided, show help
     if not any([args.classify, args.retrieval, args.autocomplete, args.highlight, args.all]):
         parser.print_help()
         return
-    
+
     # Run selected functions
     if args.all or args.classify:
         print("\n" + "="*80)
         print("Running: News Article Classification")
         print("="*80)
         classify_news_articles()
-    
+
     if args.all or args.retrieval:
         print("\n" + "="*80)
         print("Running: Retrieval Confidence Scoring")
         print("="*80)
         retrieval_confidence_scoring()
-    
+
     if args.all or args.autocomplete:
         print("\n" + "="*80)
         print("Running: Autocomplete Demonstration")
         print("="*80)
         autocomplete()
-    
+
     if args.all or args.highlight:
         print("\n" + "="*80)
         print("Running: Token Highlighting")
