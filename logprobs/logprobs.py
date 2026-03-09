@@ -283,6 +283,7 @@ def highlight_bytes():
 
     aggregated_bytes = []
     joint_logprob = 0.0
+    joint_prob = 1.0
 
     # Iterate over tokens, aggregate bytes and calculate joint logprob
     for token in API_RESPONSE.choices[0].logprobs.content:
@@ -292,6 +293,7 @@ def highlight_bytes():
         print("Bytes:", token.bytes, "\n")
         aggregated_bytes += token.bytes
         joint_logprob += token.logprob
+        joint_prob *= math.exp(token.logprob)
 
     # Decode the aggregated bytes to text
     aggregated_text = bytes(aggregated_bytes).decode("utf-8")
@@ -302,7 +304,11 @@ def highlight_bytes():
     # Print the results
     print("Bytes array:", aggregated_bytes)
     print(f"Decoded bytes: {aggregated_text}")
-    print("Joint prob:", np.round(math.exp(joint_logprob) * 100, 2), "%")
+    joint_prob_computed = joint_prob
+    joint_prob = math.exp(joint_logprob)
+    assert np.isclose(joint_prob,joint_prob_computed)
+    print("Joint prob:", np.round(joint_prob * 100, 2), "%")
+    print("Joint prob (computed):", np.round(joint_prob_computed * 100, 2), "%")
 
 def main():
     parser = argparse.ArgumentParser(description="Run logprobs demonstration functions")
