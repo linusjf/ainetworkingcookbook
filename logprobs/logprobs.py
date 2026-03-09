@@ -13,6 +13,7 @@ Logprobs.
 from openai import OpenAI
 from typing import Any
 import numpy as np
+import argparse
 
 client = OpenAI()
 
@@ -275,10 +276,64 @@ def highlight_bytes():
     highlight_text(API_RESPONSE)
 
 def main():
-    classify_news_articles()
-    retrieval_confidence_scoring()
-    autocomplete()
-    highlight_bytes()
+    parser = argparse.ArgumentParser(description="Run logprobs demonstration functions")
+    parser.add_argument(
+        "--classify",
+        action="store_true",
+        help="Run news article classification demonstration"
+    )
+    parser.add_argument(
+        "--retrieval",
+        action="store_true",
+        help="Run retrieval confidence scoring demonstration"
+    )
+    parser.add_argument(
+        "--autocomplete",
+        action="store_true",
+        help="Run autocomplete demonstration"
+    )
+    parser.add_argument(
+        "--highlight",
+        action="store_true",
+        help="Run token highlighting demonstration"
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run all demonstrations"
+    )
+    
+    args = parser.parse_args()
+    
+    # If no arguments provided, show help
+    if not any([args.classify, args.retrieval, args.autocomplete, args.highlight, args.all]):
+        parser.print_help()
+        return
+    
+    # Run selected functions
+    if args.all or args.classify:
+        print("\n" + "="*80)
+        print("Running: News Article Classification")
+        print("="*80)
+        classify_news_articles()
+    
+    if args.all or args.retrieval:
+        print("\n" + "="*80)
+        print("Running: Retrieval Confidence Scoring")
+        print("="*80)
+        retrieval_confidence_scoring()
+    
+    if args.all or args.autocomplete:
+        print("\n" + "="*80)
+        print("Running: Autocomplete Demonstration")
+        print("="*80)
+        autocomplete()
+    
+    if args.all or args.highlight:
+        print("\n" + "="*80)
+        print("Running: Token Highlighting")
+        print("="*80)
+        highlight_bytes()
 
 if __name__ == "__main__":
     main()
