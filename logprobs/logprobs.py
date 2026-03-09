@@ -229,11 +229,64 @@ def autocomplete():
     for sentence, token in low_prob_completions.items():
         print(f"  '{sentence}' -> '{token}'")
 
+def highlight_bytes():
+    PROMPT = """What's the longest word in the English language?"""
+
+    API_RESPONSE = get_completion(
+        [{"role": "user", "content": PROMPT}], model="gpt-4o", logprobs=True, top_logprobs=5
+    )
+
+
+    def highlight_text(api_response):
+        # ANSI color codes for terminal output
+        colors = [
+            "\033[95m",  # Magenta
+            "\033[92m",  # Green
+            "\033[93m",  # Yellow
+            "\033[91m",  # Red
+            "\033[94m",  # Blue
+        ]
+        reset_color = "\033[0m"
+        
+        tokens = api_response.choices[0].logprobs.content
+
+        color_idx = 0  # Initialize color index
+        print("\n" + "="*80)
+        print("Token Highlighting (Colored by Token)")
+        print("="*80)
+        print("\nResponse text with colored tokens:")
+        print()
+        
+        for t in tokens:
+            token_str = bytes(t.bytes).decode("utf-8")  # Decode bytes to string
+
+            # Print colored token to console
+            print(f"{colors[color_idx]}{token_str}{reset_color}", end="")
+
+            # Move to the next color
+            color_idx = (color_idx + 1) % len(colors)
+        
+        print("\n\n" + "="*80)
+        print("Token Details")
+        print("="*80)
+        
+        # Print detailed token information
+        for i, t in enumerate(tokens, start=1):
+            token_str = bytes(t.bytes).decode("utf-8")
+            # Show token with its color
+            color_code = colors[(i-1) % len(colors)]
+            print(f"Token {i}: {color_code}{repr(token_str)}{reset_color} "
+                  f"(bytes: {list(t.bytes)}, logprob: {t.logprob:.4f})")
+        
+        print(f"\nTotal number of tokens: {len(tokens)}")
+
+    highlight_text(API_RESPONSE)
 
 def main():
     classify_news_articles()
     retrieval_confidence_scoring()
     autocomplete()
+    highlight_bytes()
 
 if __name__ == "__main__":
     main()
