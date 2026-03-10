@@ -310,6 +310,36 @@ def highlight_bytes():
     print("Joint prob:", np.round(joint_prob * 100, 2), "%")
     print("Joint prob (computed):", np.round(joint_prob_computed * 100, 2), "%")
 
+def perplexity():
+    prompts = [
+    "In a short sentence, has artifical intelligence grown in the last decade?",
+    "In a short sentence, what are your thoughts on the future of artificial intelligence?",
+]
+
+    for prompt in prompts:
+        API_RESPONSE = get_completion(
+            [{"role": "user", "content": prompt}],
+            model="gpt-4o-mini",
+            logprobs=True,
+        )
+
+        logprobs = [token.logprob for token in API_RESPONSE.choices[0].logprobs.content]
+        response_text = API_RESPONSE.choices[0].message.content
+        response_text_tokens = [token.token for token in API_RESPONSE.choices[0].logprobs.content]
+        max_starter_length = max(len(s) for s in ["Prompt:", "Response:", "Tokens:", "Logprobs:", "Perplexity:"])
+        max_token_length = max(len(s) for s in response_text_tokens)
+
+
+        formatted_response_tokens = [s.rjust(max_token_length) for s in response_text_tokens]
+        formatted_lps = [f"{lp:.2f}".rjust(max_token_length) for lp in logprobs]
+
+        perplexity_score = np.exp(-np.mean(logprobs))
+        print("Prompt:".ljust(max_starter_length), prompt)
+        print("Response:".ljust(max_starter_length), response_text, "\n")
+        print("Tokens:".ljust(max_starter_length), " ".join(formatted_response_tokens))
+        print("Logprobs:".ljust(max_starter_length), " ".join(formatted_lps))
+        print("Perplexity:".ljust(max_starter_length), perplexity_score, "\n")
+
 def main():
     parser = argparse.ArgumentParser(description="Run logprobs demonstration functions")
     parser.add_argument(
@@ -333,6 +363,11 @@ def main():
         help="Run token highlighting demonstration"
     )
     parser.add_argument(
+        "--perplexity",
+        action="store_true",
+        help="Run perplexity demonstration"
+    )
+    parser.add_argument(
         "--all",
         action="store_true",
         help="Run all demonstrations"
@@ -341,7 +376,7 @@ def main():
     args = parser.parse_args()
 
     # If no arguments provided, show help
-    if not any([args.classify, args.retrieval, args.autocomplete, args.highlight, args.all]):
+    if not any([args.classify, args.retrieval, args.autocomplete, args.highlight, args.perplexity, args.all]):
         parser.print_help()
         return
 
@@ -369,6 +404,12 @@ def main():
         print("Running: Token Highlighting")
         print("="*80)
         highlight_bytes()
+
+    if args.all or args.perplexity:
+        print("\n" + "="*80)
+        print("Running: Perplexity Scoring")
+        print("="*80)
+        perplexity()
 
 if __name__ == "__main__":
     main()
