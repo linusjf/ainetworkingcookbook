@@ -38,11 +38,14 @@ content = response.choices[0].message.content
 # Find the actual DOT content (between graph/digraph and the closing brace)
 import re
 assert content
+print(content)
 dot_match = re.search(r'((?:di)?graph\s+\w*\s*\{.*\})',content, re.DOTALL)
 if dot_match:
+    print("regex matched")
     dot_content = dot_match.group(1)
 else:
     # Fallback: try to clean up the content
+    print("cleaning up content")
     lines = content.split('\n')
     dot_lines = []
     in_graph = False
