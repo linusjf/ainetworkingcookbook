@@ -32,11 +32,11 @@ def main():
         default="Categorization text run",
         help="Optional name for the evaluation run. Default: 'Categorization text run'"
     )
-    
+
     args = parser.parse_args()
-    
+
     client = OpenAI()
-    
+
     run = client.evals.runs.create(
         args.eval_id,
         name=args.name,
@@ -53,8 +53,8 @@ def main():
             "source": {"type": "file_id", "id": args.file_id},
         },
     )
-    
-    print(run)
+
+    print(run.id)
 
 if __name__ == "__main__":
     main()

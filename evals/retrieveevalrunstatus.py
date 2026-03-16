@@ -33,7 +33,7 @@ def main():
     client = OpenAI()
 
     run = client.evals.runs.retrieve(args.run_id, eval_id=args.eval_id)
-    
+
     # User-friendly console output
     print("\n" + "="*60)
     print("EVALUATION RUN STATUS")
@@ -42,32 +42,25 @@ def main():
     print(f"Run ID: {run.id}")
     print(f"Status: {run.status}")
     print(f"Created at: {run.created_at}")
-    print(f"Updated at: {run.updated_at}")
-    
+
     if hasattr(run, 'name') and run.name:
         print(f"Run name: {run.name}")
-    
-    if hasattr(run, 'description') and run.description:
-        print(f"Description: {run.description}")
-    
-    # Show progress if available
-    if hasattr(run, 'progress'):
-        if run.progress and hasattr(run.progress, 'total') and hasattr(run.progress, 'completed'):
-            print(f"Progress: {run.progress.completed}/{run.progress.total} "
-                  f"({(run.progress.completed/run.progress.total*100):.1f}%)")
-    
+
+    if hasattr(run, 'report_url') and run.report_url:
+        print(f"Report URL: {run.report_url}")
+
     # Show results summary if available
-    if hasattr(run, 'results_summary'):
-        if run.results_summary:
-            print("\nResults Summary:")
-            for key, value in run.results_summary.items():
+    if hasattr(run, 'result_counts'):
+        if run.result_counts:
+            print("\nResults Count:")
+            for key, value in run.result_counts:
                 print(f"  {key}: {value}")
-    
+
     # Show error if failed
     if run.status == "failed" and hasattr(run, 'error'):
         if run.error:
             print(f"\nError: {run.error}")
-    
+
     print("="*60 + "\n")
 
 if __name__ == "__main__":
