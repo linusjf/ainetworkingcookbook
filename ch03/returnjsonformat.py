@@ -13,7 +13,6 @@ Returnjsonformat.
 import os
 import argparse
 import json
-from datetime import datetime
 from openai import OpenAI
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -27,7 +26,7 @@ I have a network with the following devices:
 - 8 access switches (Cisco Catalyst 9200)
 Create an inventory document for this network.
 """
-    
+
     if validate:
         json_prompt = base_scenario + """
 Return as valid JSON that passes the following validation:
@@ -52,13 +51,14 @@ Return the inventory in JSON format with the following structure:
 - Include a summary section with total counts
 Provide ONLY the JSON output, no additional text.
 """
-    
+
     return json_prompt
 
 def validate_json(json_string: str) -> bool:
     """Validate that the JSON string can be parsed successfully."""
     try:
         parsed = json.loads(json_string)
+        assert "validation" in parsed
         print("✓ JSON validation successful")
         return True
     except json.JSONDecodeError as e:
@@ -75,33 +75,33 @@ def main():
         action="store_true",
         help="Add JSON validation instructions and validate the output."
     )
-    
+
     args = parser.parse_args()
-    
+
     prompt = generate_prompt(args.validate)
-    
+
     print("Generating JSON inventory...")
     if args.validate:
         print("(With JSON validation instructions)")
-    
+
     response_json = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}]
     )
-    
+
     json_content = response_json.choices[0].message.content
-    
+    assert json_content
     print("\n" + "="*60)
     print("JSON Format Response:")
     print("="*60)
     print(json_content)
-    
+
     if args.validate:
         print("\n" + "="*60)
         print("Validating JSON...")
         print("="*60)
         is_valid = validate_json(json_content)
-        
+
         if is_valid:
             # Also check for validation field with timestamp
             parsed = json.loads(json_content)
